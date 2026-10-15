@@ -8,7 +8,7 @@ require __DIR__ . '/core/bootstrap.php';
 require_method('GET');
 
 $checks = [
-    'php_version'   => version_compare(PHP_VERSION, '8.1', '>=') ? 'ok' : 'PHP 8.1 or newer is needed (you have ' . PHP_VERSION . ')',
+    'php_version'   => version_compare(PHP_VERSION, '8.0', '>=') ? 'ok (' . PHP_VERSION . ')' : 'PHP 8.0 or newer is needed (you have ' . PHP_VERSION . ')',
     'curl'          => function_exists('curl_init') ? 'ok' : 'Turn on extension=curl in php.ini',
     'openssl'       => function_exists('openssl_sign') ? 'ok' : 'Turn on extension=openssl in php.ini',
     'gd_images'     => function_exists('imagecreatetruecolor') ? 'ok' : 'Turn on extension=gd in php.ini (needed to shrink photos)',

@@ -25,19 +25,46 @@
  * Documents come back as plain PHP arrays. Every document also gets '_id' (its document ID).
  */
 
+// Written for PHP 8.0 and newer (XAMPP 8.0 works).
+
 final class FirestoreException extends RuntimeException
 {
-    public function __construct(string $message, public readonly int $http = 0, public readonly string $status = '')
+    /** HTTP code from Google (404, 409...) */
+    public $http;
+    /** Google's error status, e.g. NOT_FOUND, ALREADY_EXISTS */
+    public $status;
+
+    public function __construct(string $message, int $http = 0, string $status = '')
     {
         parent::__construct($message);
+        $this->http = $http;
+        $this->status = $status;
     }
 }
 
 /** Wrap binary data (photos) so it is stored as a Firestore "bytes" field. */
 final class FsBytes
 {
-    public function __construct(public readonly string $data)
+    /** @var string */
+    public $data;
+
+    public function __construct(string $data)
     {
+        $this->data = $data;
+    }
+}
+
+// array_is_list() only exists from PHP 8.1
+if (!function_exists('array_is_list')) {
+    function array_is_list(array $a): bool
+    {
+        $i = 0;
+        foreach ($a as $k => $_) {
+            if ($k !== $i++) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
