@@ -1,0 +1,25 @@
+name: roadreport_mobile
+description: Mobile app for the Road Accident Reporting System (public reporters).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2              # calls the PHP API
+  shared_preferences: ^2.3.2 # saves the login token
+  geolocator: ^13.0.1        # GPS location (FR-04)
+  flutter_map: ^7.0.2        # OpenStreetMap map, no API key needed
+  latlong2: ^0.9.1           # coordinates for flutter_map
+  image_picker: ^1.1.2       # camera and gallery photos (FR-05)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

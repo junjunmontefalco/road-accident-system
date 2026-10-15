@@ -1,0 +1,14 @@
+# Web
+web/node_modules/
+web/dist/
+web/.env
+
+# Uploaded photos (keep the folder and its .htaccess)
+api/uploads/*
+!api/uploads/.htaccess
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
