@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Paste this in Firebase console > Firestore Database > Rules, then Publish.
+//
+// Only the PHP API reads and writes the database. It uses the service account key,
+// and service accounts are not limited by these rules. So nobody else (browsers,
+// apps, someone who copied the project's web API key) can touch the data directly.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

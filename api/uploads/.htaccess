@@ -1,3 +1,0 @@
-# Photos are private: they are only served through api/photos/view.php,
-# which checks who is asking. Nothing here can be opened or run directly.
-Require all denied

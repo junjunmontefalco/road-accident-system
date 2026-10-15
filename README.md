@@ -3,118 +3,89 @@
 IT 305 Advance Web Development final project, BSIT 3I-G2, Group 1.
 Submission: November 2, 2026.
 
-One system, three parts that share one database:
+One system, three parts that share one **Firebase** database:
 
 ```
 road-accident-system/
-├── database/   MySQL schema + sample data           (Vince)
-├── api/        Plain PHP JSON API, one file per endpoint (Juliana)
-├── web/        React website: reporters, admins, officers (Jan Russel + Vince)
-├── mobile/     Flutter app for reporters             (Alyana)
-└── docs/       API contract and project notes        (John + Jan Russel)
+├── web/        Website in plain HTML, CSS, JavaScript + Bootstrap 5 (no React, no build step)
+├── api/        PHP API, one file per endpoint; the only part that talks to Firebase
+├── mobile/     Flutter + Dart app for reporters
+├── database/   Firestore design, security rules, sample data
+└── docs/       API contract, setup and deployment guide
 ```
-
-Only the API talks to the database. The website and the app only call API endpoints
-(listed in [docs/API_CONTRACT.md](docs/API_CONTRACT.md)).
-
-## What works already
-
-The starter covers the main flow end to end, so everyone can build on something real:
-
-- Register, log in, log out (token login works for web and mobile)
-- Submit a report with date, time, type, vehicles, injuries, description, GPS or map pin, and up to 5 photos
-- Automatic duplicate flag for reports with the same type, time and place
-- My reports, report details with status timeline, private photo viewing
-- Notifications on submission and on every status change
-- Admin: report list with search and filters, status changes with the allowed workflow, dashboard counts
-- Officer: assigned reports only, In Progress and Resolved updates
-- Audit trail recorded for every important action
-
-Everything still to build is marked in the code with `TODO` and the owner's name. Endpoints not built
-yet answer `501 Not built yet: ... (owner: ...)`.
-
-## Setup on your laptop (everyone)
-
-You need **XAMPP** (Apache + MySQL, PHP 8.1 or newer) and **Node.js 20+**.
-
-### 1. Put the project in htdocs
-
-Clone or copy this folder to `C:\xampp\htdocs\road-accident-system`.
-Start **Apache** and **MySQL** in the XAMPP Control Panel.
-
-### 2. Create the database
-
-1. Open http://localhost/phpmyadmin
-2. Create a database named `road_accident_db` (collation `utf8mb4_general_ci`)
-3. Select it, open **Import**, import `database/schema.sql`
-4. Import `database/seed.sql` (test accounts + 40 sample reports around Bulacan)
-
-Check the API: open http://localhost/road-accident-system/api/accident-types/list.php
-You should see JSON starting with `{"success":true`.
-
-If your MySQL root user has a password, set it in `api/config/config.php`.
-
-### 3. Run the website
-
-```bash
-cd web
-npm install
-copy .env.example .env      # Mac/Linux: cp .env.example .env
-npm run dev
-```
-
-Open http://localhost:5173
-
-### 4. Run the mobile app
-
-See [mobile/README.md](mobile/README.md).
-
-### Test accounts
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Administrator | admin@roadreport.test | Admin@123 |
-| Traffic officer | officer@roadreport.test | Officer@123 |
-| Traffic officer | officer2@roadreport.test | Officer@123 |
-| Public user | reporter@roadreport.test | Reporter@123 |
-| Public user | reporter2@roadreport.test | Reporter@123 |
-
-To reset the data any time, import `database/seed.sql` again.
-
-## Who builds what
-
-| Member | Folders and files |
-| --- | --- |
-| **John** (leader, QA) | `api/export/reports.php` (FR-15), test cases, GitHub, demo setup, video |
-| **Juliana** (backend) | everything in `api/`; first: `reports/assign.php`, `reports/add-remark.php`, `users/save.php`, `accident-types/save.php`, `reports/edit.php`, `reports/flag.php`, email in `core/notify.php` |
-| **Vince** (database + admin) | `database/`, `api/dashboard/*`, `web/src/pages/admin/*`, `web/src/components/ReportsTable.jsx` |
-| **Alyana** (mobile) | `mobile/` |
-| **Jan Russel** (web UI + docs) | `web/src/pages/reporter/*`, `web/src/pages/officer/*`, `Landing`, `Login`, `Register`, `Notifications`, `web/src/styles/app.css`, `docs/` user guide |
-
-Search the code for `TODO` and your name to find your tasks.
-
-## Working together on GitHub
-
-1. John creates the repo and pushes this starter to `main`, then creates a `dev` branch.
-2. Everyone clones it into `C:\xampp\htdocs\road-accident-system`.
-3. Work on your own branch: `git checkout -b feature/juliana-assign` from `dev`.
-4. Push and open a pull request into `dev`. John checks and merges.
-5. `main` only gets a version that fully works (for the demo).
-
-Never commit: `web/node_modules`, `web/.env`, `api/uploads/reports/`, real passwords.
-
-## Hosting warning
-
-Do not host the API on InfinityFree. Its free plan blocks mobile apps from calling the API,
-so the Flutter app would not work. For the video demo, run XAMPP on one laptop and connect
-the phone to the same Wi-Fi (see mobile/README.md).
-
-## Tech stack
 
 | Part | Technology |
 | --- | --- |
-| Web | React 19 (Vite), Bootstrap 5, React Router, Leaflet + OpenStreetMap |
-| Mobile | Flutter: http, geolocator, flutter_map, image_picker, shared_preferences |
-| API | PHP 8 (no framework), PDO prepared statements, Bearer token login |
-| Database | MySQL / MariaDB |
+| Website | HTML, CSS, JavaScript (ES modules), Bootstrap 5.3, Leaflet + OpenStreetMap, Chart.js |
+| Mobile | Flutter: http, geolocator, flutter_map, image_picker, shared_preferences, url_launcher |
+| API | PHP 8.1+ (no framework, no Composer), Bearer token login, FPDF for PDF export, optional PHPMailer |
+| Database | **Firebase Cloud Firestore**, reached through its REST API with a service account key |
+| Photos | Shrunk to 1280 px JPEG and stored inside Firestore (no paid Firebase Storage needed) |
+| Hosting | **Hostinger** (website + API for the app) and **InfinityFree** (website) |
 | Maps | OpenStreetMap (free, no API key) |
+
+**Start here:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Firebase setup, XAMPP, VS Code, Hostinger, InfinityFree).
+Endpoints: [docs/API_CONTRACT.md](docs/API_CONTRACT.md). Database: [database/FIRESTORE_SCHEMA.md](database/FIRESTORE_SCHEMA.md).
+Mobile: [mobile/README.md](mobile/README.md).
+
+## What the system does
+
+| ID | Requirement | Where |
+| --- | --- | --- |
+| FR-01 | Registration | `register.html`, app Register; `api/auth/register.php` |
+| FR-02 | Login / logout | `login.html`, app Login; token login for web and mobile |
+| FR-03 | Accident report form | `report-new.html`, app Report screen (3 steps) |
+| FR-04 | GPS or map pin | "Use my current location" or tap the map |
+| FR-05 | Photo evidence | Up to 5 photos, camera or gallery, private photo viewer |
+| FR-06 | Report tracking | My reports, status timeline, answer "Additional information required" |
+| FR-07 | Report management | Admin: review, edit details, assign/reassign officer; officer: update status, remarks |
+| FR-08 | Verification, flags | Workflow statuses, automatic duplicate flag, manual flag/unflag |
+| FR-09 | Notifications | In-app on web and app (unread badge); optional email |
+| FR-10 | Dashboard | Cards, monthly trend, types, municipalities, time of day, hotspots, map |
+| FR-11 | Search and filters | Report ID/text, status, type, municipality, dates, flagged, verified only |
+| FR-12 | Summaries | Daily, weekly, monthly, annual tables + chart |
+| FR-13 | User management | Add users, roles, badge numbers, activate/deactivate |
+| FR-14 | Audit trail | Every login, report change, export and admin action, with filters |
+| FR-15 | Export | CSV and PDF of the filtered list and of the summaries |
+
+A **public-submitted report** becomes an **officially verified accident record** only when an admin
+verifies it; statistics count only verified records.
+
+## Website pages (`web/`)
+
+| Page | Who | Owner |
+| --- | --- | --- |
+| `index.html`, `login.html`, `register.html` | everyone | Jan Russel |
+| `home.html`, `report-new.html`, `report-submitted.html`, `my-reports.html` | reporter | Jan Russel |
+| `report.html` (details + staff actions), `notifications.html`, `account.html` | all roles | Jan Russel, Vince |
+| `admin.html` (dashboard), `admin-reports.html`, `admin-summaries.html` | admin | Vince, John (export) |
+| `admin-users.html`, `admin-settings.html`, `admin-audit.html` | admin | Vince |
+| `officer.html` | officer | Jan Russel |
+
+Each page is an `.html` file with its script in `web/js/pages/<same name>.js`. Shared code:
+`js/api.js` (API calls), `js/app.js` (login check + menu), `js/ui.js` (helpers), `js/map.js`,
+`js/photo-picker.js`, `js/reports-table.js`, styles in `css/app.css`.
+
+## Who owns what
+
+| Member | Folders and files |
+| --- | --- |
+| **John** (leader, QA) | `api/export/reports.php` (FR-15), `docs/DEPLOYMENT.md`, Firebase project, hosting, test cases, video |
+| **Juliana** (backend) | `api/` (endpoints and `api/core/`) |
+| **Vince** (database + admin) | `database/`, `api/core/firestore.php`, `api/dashboard/*`, admin pages and their scripts |
+| **Alyana** (mobile) | `mobile/` |
+| **Jan Russel** (web UI + docs) | reporter and officer pages, `web/css/app.css`, user guide |
+
+## Working together on GitHub
+
+1. Work on your own branch from `dev`: `git checkout -b feature/your-name-task`.
+2. Push and open a pull request into `dev`. John checks and merges.
+3. `main` only gets a version that fully works (for the demo).
+
+Never commit: `api/config/firebase-service-account.json`, `api/cache/`, real passwords.
+
+## Credits (libraries used)
+
+Bootstrap, Leaflet, OpenStreetMap data, Chart.js, Overpass font (Google Fonts), FPDF (`api/lib/fpdf`),
+PHPMailer (`api/lib/PHPMailer`), Mozilla CA bundle (`api/config/cacert.pem`), and the Flutter packages
+listed in `mobile/pubspec.yaml`.

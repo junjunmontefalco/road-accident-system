@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
 import '../services/api.dart';
@@ -23,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const ReportFormScreen()),
     );
     if (sent == true) widget.onReportSent();
+  }
+
+  /// Opens the phone's dialer with the number filled in (the user still presses Call).
+  Future<void> _call(String phone) async {
+    final number = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final ok = await launchUrl(Uri(scheme: 'tel', path: number)).catchError((_) => false);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cannot open the dialer. Call $phone')));
+    }
   }
 
   @override
@@ -90,9 +100,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text('${c['name']}'),
-                        trailing: Text('${c['phone']}',
-                            style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.guide, fontSize: 17)),
-                        // TODO (Alyana, optional): open the dialer with the url_launcher package: tel:<number>
+                        subtitle: c['category'] != null ? Text('${c['category']}') : null,
+                        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text('${c['phone']}',
+                              style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.guide, fontSize: 17)),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.call, color: AppColors.guide, size: 20),
+                        ]),
+                        onTap: () => _call('${c['phone']}'),
                       ),
                   ],
                 ),

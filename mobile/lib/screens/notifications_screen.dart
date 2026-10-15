@@ -6,9 +6,11 @@ import '../utils/format.dart';
 import 'report_detail_screen.dart';
 
 /// FR-09 notifications. Owner: Alyana
-/// TODO (optional, if time allows): real push notifications with Firebase Cloud Messaging.
+/// The bottom bar shows the unread count; [onChanged] refreshes it after marking items read.
+/// Optional extra: real push notifications with Firebase Cloud Messaging (see mobile/README.md).
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.onChanged});
+  final VoidCallback? onChanged;
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
@@ -19,6 +21,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _reload() async {
     setState(() => _future = Api.instance.notifications());
     await _future;
+    widget.onChanged?.call();
   }
 
   @override

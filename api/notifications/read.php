@@ -8,12 +8,21 @@ require_method('POST');
 $user = require_auth();
 $in = input();
 if (!empty($in['all'])) {
-    db_exec('UPDATE notifications SET is_read = 1 WHERE user_id = ?', [$user['id']]);
+    $unread = fs_query('notifications', [['user_id', '==', $user['id']], ['is_read', '==', false]]);
+    if ($unread) {
+        fs_commit(array_map(fn($n) => fs_w_update('notifications', $n['_id'], ['is_read' => true]), $unread));
+    }
 } else {
     $id = filter_var($in['id'] ?? null, FILTER_VALIDATE_INT);
     if (!$id) {
         json_error('Send the notification id', 422);
     }
-    db_exec('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', [$id, $user['id']]);
+    $n = fs_get('notifications', $id);
+    if (!$n || (int)$n['user_id'] !== $user['id']) {
+        json_error('Notification not found', 404);
+    }
+    if (empty($n['is_read'])) {
+        fs_update('notifications', $id, ['is_read' => true]);
+    }
 }
 json_ok(null, 'Marked as read');

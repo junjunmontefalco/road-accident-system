@@ -2,6 +2,7 @@
 
 Base URL (XAMPP): `http://localhost/road-accident-system/api`
 From a phone on the same Wi-Fi: `http://<laptop IP>/road-accident-system/api`
+Online: `https://<your-site>/api` (the mobile app must use the Hostinger address; see DEPLOYMENT.md)
 
 Everyone uses exactly these paths, field names and status codes. If you need to change one,
 tell the group first and update this file in the same pull request.
@@ -26,7 +27,7 @@ Every endpoint answers JSON in the same shape.
 | 403 | Logged in, but this role may not do it |
 | 404 | Not found, or not yours to see |
 | 422 | Validation errors in `errors` |
-| 501 | Endpoint not built yet (message names the owner) |
+| 500 | Server or Firebase problem (the message says what; open /health.php) |
 
 ## Login token
 
@@ -41,35 +42,42 @@ adds it to every photo URL it returns.
 
 ## Endpoints
 
-Status: **works** = done and tested · **starter** = partly done · **todo** = returns 501
+All endpoints are built and tested. Data is stored in Firebase (Cloud Firestore); see
+[database/FIRESTORE_SCHEMA.md](../database/FIRESTORE_SCHEMA.md).
 
-| Method | Path | Who | Purpose | FR | Status | Owner |
-| --- | --- | --- | --- | --- | --- | --- |
-| POST | /auth/register.php | public | Create reporter account, returns token | 01 | works | Juliana |
-| POST | /auth/login.php | public | Log in, returns token + user | 02 | works | Juliana |
-| POST | /auth/logout.php | any | End this token | 02 | works | Juliana |
-| GET | /auth/me.php | any | Current user (check saved token) | 02 | works | Juliana |
-| GET | /accident-types/list.php | public | Form options: types, injury options, vehicle types, statuses | 03 | works | Juliana |
-| POST | /accident-types/save.php | admin | Add or edit an accident category | | todo | Juliana |
-| POST | /reports/create.php | reporter | Submit report + photos (multipart) | 03, 04, 05, 08 | works | Juliana |
-| GET | /reports/mine.php | reporter | My reports (`?status=`) | 06 | works | Juliana |
-| GET | /reports/view.php?id= | owner, staff | Full report: vehicles, photos, history, remarks | 06, 07 | works | Juliana |
-| GET | /reports/list.php | admin, officer | Search and filter, paginated | 07, 11 | works | Juliana |
-| POST | /reports/update-status.php | admin, officer | Move to the next allowed status | 07, 08 | works | Juliana |
-| POST | /reports/assign.php | admin | Assign a verified report to an officer | 07 | todo | Juliana |
-| POST | /reports/add-remark.php | admin, officer | Remark, finding or action taken | 07 | todo | Juliana |
-| POST | /reports/edit.php | admin | Correct report details | 07 | todo | Juliana |
-| POST | /reports/flag.php | admin | Flag or unflag incomplete or duplicate | 08 | todo | Juliana |
-| GET | /photos/view.php?id=&token= | owner, staff | Photo file | 05 | works | Juliana |
-| GET | /notifications/list.php | any | My notifications + unread count | 09 | works | Juliana |
-| POST | /notifications/read.php | any | `{ id }` or `{ all: true }` | 09 | works | Juliana |
-| GET | /dashboard/summary.php | admin | Cards (works) + charts and map data (todo) | 10 | starter | Vince |
-| GET | /dashboard/report-summary.php | admin | Daily, weekly, monthly, annual | 12 | todo | Vince |
-| GET | /users/list.php?role= | admin | Users, officer dropdown | 13 | starter | Juliana |
-| POST | /users/save.php | admin | Create or edit user and role | 13 | todo | Juliana |
-| GET | /audit/list.php | admin | Audit trail (latest 100 works) | 14 | starter | Juliana |
-| GET | /export/reports.php?format=csv\|pdf | admin | Download reports | 15 | todo | John |
-| GET | /emergency-contacts/list.php | public | Numbers for the mobile home screen | | works | Juliana |
+| Method | Path | Who | Purpose | FR | Owner |
+| --- | --- | --- | --- | --- | --- |
+| GET | /health.php | public | Setup check (PHP extensions, Firebase key, Firestore connection) | | John |
+| POST | /auth/register.php | public | Create reporter account, returns token | 01 | Juliana |
+| POST | /auth/login.php | public | Log in, returns token + user | 02 | Juliana |
+| POST | /auth/logout.php | any | End this token | 02 | Juliana |
+| GET | /auth/me.php | any | Current user (check saved token) | 02 | Juliana |
+| POST | /auth/update-profile.php | any | `{ full_name?, email?, phone?, current_password?, password?, password_confirmation? }` | 01 | Juliana |
+| GET | /accident-types/list.php | public | Form options: types, injury options, vehicle types, statuses, max_photos (`?all=1` admin) | 03 | Juliana |
+| POST | /accident-types/save.php | admin | `{ id?, name, description?, is_active? }` add, rename, hide | | Juliana |
+| GET | /emergency-contacts/list.php | public | Numbers for the home screens (`?all=1` admin) | | Juliana |
+| POST | /emergency-contacts/save.php | admin | `{ id?, name, phone, category?, sort_order?, is_active?, delete? }` | | Juliana |
+| GET | /settings/get.php | public | System settings | | Juliana |
+| POST | /settings/save.php | admin | `{ system_name?, max_photos_per_report?, duplicate_window_minutes?, duplicate_radius_km? }` | | Juliana |
+| POST | /reports/create.php | reporter | Submit report + photos (multipart) | 03, 04, 05, 08 | Juliana |
+| GET | /reports/mine.php | reporter | My reports (`?status=`) | 06 | Juliana |
+| GET | /reports/view.php?id= | owner, staff | Full report: vehicles, photos, history, remarks (`?code=` also works) | 06, 07 | Juliana |
+| GET | /reports/list.php | admin, officer | Search and filter, paginated (officers: assigned only) | 07, 11 | Juliana |
+| POST | /reports/update-status.php | admin, officer | `{ id, status, note?, reason? }` next allowed status | 07, 08 | Juliana |
+| POST | /reports/assign.php | admin | `{ id, officer_id, note? }` assign a verified report, or change the officer | 07 | Juliana |
+| POST | /reports/add-remark.php | admin, officer | `{ id, type: remark/finding/action, content, is_internal }` | 07 | Juliana |
+| POST | /reports/edit.php | admin | `{ id, ...fields to correct }` (old/new values go to the audit trail) | 07 | Juliana |
+| POST | /reports/flag.php | admin | `{ id, flagged, reason?, duplicate_of? (id or RA- code) }` | 08 | Juliana |
+| POST | /reports/add-info.php | reporter | Answer "Additional Information Required": `id`, `message`, `photos[]` (multipart) | 06 | Juliana |
+| GET | /photos/view.php?id=&token= | owner, staff | Photo file (stored in Firestore) | 05 | Juliana |
+| GET | /notifications/list.php | any | My notifications + unread count (`?unread=1`) | 09 | Juliana |
+| POST | /notifications/read.php | any | `{ id }` or `{ all: true }` | 09 | Juliana |
+| GET | /dashboard/summary.php | admin | Cards, charts, hotspots, map points, recent (`?date_from=&date_to=`) | 10 | Vince |
+| GET | /dashboard/report-summary.php | admin | `?period=daily/weekly/monthly/annual&scope=official/all&date_from=&date_to=` | 12 | Vince |
+| GET | /users/list.php | admin | `?role=&status=&q=&page=&per_page=` returns `{ items, page, total, total_pages }`; officers have `open_cases` | 13 | Juliana |
+| POST | /users/save.php | admin | `{ id?, full_name, email, phone?, role, badge_no?, password?, status? }` | 13 | Juliana |
+| GET | /audit/list.php | admin | `?action=&user_id=&q=&date_from=&date_to=&page=` (default last 30 days) | 14 | Juliana |
+| GET | /export/reports.php | admin, officer | `?format=csv/pdf&token=` + the list filters; `&type=summary&period=` for FR-12 tables (admin) | 15 | John |
 
 ## Report statuses
 
@@ -77,7 +85,7 @@ Status: **works** = done and tested · **starter** = partly done · **todo** = r
 | --- | --- | --- | --- |
 | submitted | Submitted | under_review, rejected | admin |
 | under_review | Under Review | info_required, verified, rejected | admin |
-| info_required | Additional Information Required | under_review, rejected | admin |
+| info_required | Additional Information Required | under_review (admin, or automatically when the reporter answers with add-info.php), rejected | admin, reporter |
 | verified | Verified | assigned (via assign.php), resolved | admin |
 | assigned | Assigned | in_progress | admin, assigned officer |
 | in_progress | In Progress | resolved | admin, assigned officer |
@@ -85,7 +93,7 @@ Status: **works** = done and tested · **starter** = partly done · **todo** = r
 | rejected | Rejected (reason required) | (end) | |
 
 A report counts as an **official accident record** once it is verified (`is_official_record: true`).
-Statistics should count only those, using the database view `official_accident_records`.
+Statistics count only those (`is_official_record()` in `api/core/reports.php`).
 
 ## Examples
 
@@ -120,7 +128,7 @@ Content-Type: application/json
 | description | at least 10 characters | yes |
 | vehicles | `[{"type":"Car","quantity":2}]` (JSON text) | no |
 | source | web or mobile | no |
-| photos[] | up to 5 files, JPG/PNG/WEBP, 5 MB each | no |
+| photos[] | up to 5 files (admin setting), JPG/PNG/WEBP, 10 MB each; shrunk to 1280 px JPEG and saved in Firestore | no |
 
 Returns the report (same shape as below) with status `submitted` and `report_code` like `RA-2026-000043`.
 

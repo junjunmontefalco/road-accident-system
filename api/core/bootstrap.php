@@ -25,7 +25,7 @@ function config(string $key, $default = null)
     return $value;
 }
 
-// ---- CORS (lets the React dev server and the Flutter app call the API) ----
+// ---- CORS (lets the website and the Flutter app call the API) ----
 header('Access-Control-Allow-Origin: ' . config('cors_origin', '*'));
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
@@ -36,17 +36,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/response.php';
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/firestore.php';
+require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/request.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/status.php';
 require_once __DIR__ . '/audit.php';
 require_once __DIR__ . '/notify.php';
 require_once __DIR__ . '/reports.php';
+require_once __DIR__ . '/stats.php';
+
+function now(): string
+{
+    return date('Y-m-d H:i:s');
+}
 
 // ---- Turn any uncaught error into a JSON response ----
 set_exception_handler(function (Throwable $e) {
-    $body = ['success' => false, 'message' => 'Server error'];
+    $body = ['success' => false, 'message' => $e instanceof FirestoreException
+        ? 'Database (Firebase) problem: ' . $e->getMessage()
+        : 'Server error'];
     if (config('debug')) {
         $body['debug'] = $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
     }

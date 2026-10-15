@@ -9,12 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.2              # calls the PHP API
+  http: ^1.2.2              # calls the PHP API (which reads/writes Firebase)
   shared_preferences: ^2.3.2 # saves the login token
   geolocator: ^13.0.1        # GPS location (FR-04)
   flutter_map: ^7.0.2        # OpenStreetMap map, no API key needed
   latlong2: ^0.9.1           # coordinates for flutter_map
   image_picker: ^1.1.2       # camera and gallery photos (FR-05)
+  url_launcher: ^6.3.0       # tap an emergency number to call it
 
 dev_dependencies:
   flutter_test:

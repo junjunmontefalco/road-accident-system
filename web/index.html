@@ -1,17 +1,46 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#23272B" />
-    <title>RoadReport: report a road accident</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#23272B">
+  <title>RoadReport: report a road accident in Bulacan</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Public landing page. Owner: Jan Russel -->
+  <div class="landing">
+    <header class="container d-flex justify-content-between align-items-center py-3">
+      <span class="brand brand-light"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="6" transform="rotate(45 32 32)" fill="#F2B705" stroke="#23272B" stroke-width="4"/><rect x="29" y="18" width="6" height="18" rx="3" fill="#23272B"/><circle cx="32" cy="43" r="3.5" fill="#23272B"/></svg><span>RoadReport</span></span>
+      <a href="login.html" class="btn btn-sm btn-outline-light">Log in</a>
+    </header>
+    <section class="container landing-hero">
+      <h1>Saw a road accident in Bulacan? Report it here.</h1>
+      <p class="lead">Send the place, time and photos in a few minutes. Traffic authorities review every report, and you can
+        follow its status until the case is closed.</p>
+      <div class="d-flex flex-wrap gap-3 mt-4">
+        <a href="register.html" class="btn btn-report btn-lg">Report an accident</a>
+        <a href="login.html" class="btn btn-lg btn-outline-light">Track my report</a>
+      </div>
+      <p class="small text-white-50 mt-4 mb-0">In an emergency, call 911 first. This system is for reporting, not for dispatching help.</p>
+    </section>
+    <div class="lane-line" aria-hidden="true"></div>
+    <section class="landing-steps">
+      <div class="container">
+        <ol class="steps">
+          <li><h2 class="h6">Describe what happened</h2><p>Date, time, type of accident, vehicles and injuries.</p></li>
+          <li><h2 class="h6">Pin the location</h2><p>Use your phone's GPS or tap the spot on the map.</p></li>
+          <li><h2 class="h6">Add photos and send</h2><p>You get a report ID right away, and a notice each time the status changes.</p></li>
+        </ol>
+        <p class="small text-secondary mt-5 mb-0">Also available as an Android app. Traffic officers and administrators log in here too.</p>
+      </div>
+    </section>
+  </div>
+  <script type="module" src="js/pages/landing.js"></script>
+</body>
 </html>

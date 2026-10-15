@@ -53,6 +53,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   // Step 3: photos
   final _picker = ImagePicker();
   final List<XFile> _photos = [];
+  int _maxPhotos = maxPhotos; // the admin can change it; the server sends the current limit
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         _types = List<Map<String, dynamic>>.from((o['accident_types'] as List).map((e) => Map<String, dynamic>.from(e)));
         _injuries = List<Map<String, dynamic>>.from((o['injury_options'] as List).map((e) => Map<String, dynamic>.from(e)));
         _vehicleTypes = List<String>.from(o['vehicle_types'] as List);
+        _maxPhotos = (o['max_photos'] as num?)?.toInt() ?? maxPhotos;
       });
     }).catchError((e) {
       if (mounted) setState(() => _message = '$e');
@@ -131,14 +133,14 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   // ---------- photos ----------
 
   Future<void> _addPhoto(ImageSource source) async {
-    if (_photos.length >= maxPhotos) return;
+    if (_photos.length >= _maxPhotos) return;
     try {
       if (source == ImageSource.camera) {
-        final f = await _picker.pickImage(source: source, imageQuality: 80, maxWidth: 1600);
+        final f = await _picker.pickImage(source: source, imageQuality: photoQuality, maxWidth: photoMaxSide, maxHeight: photoMaxSide);
         if (f != null) setState(() => _photos.add(f));
       } else {
-        final files = await _picker.pickMultiImage(imageQuality: 80, maxWidth: 1600);
-        setState(() => _photos.addAll(files.take(maxPhotos - _photos.length)));
+        final files = await _picker.pickMultiImage(imageQuality: photoQuality, maxWidth: photoMaxSide, maxHeight: photoMaxSide);
+        setState(() => _photos.addAll(files.take(_maxPhotos - _photos.length)));
       }
     } catch (e) {
       setState(() => _message = 'Could not open the camera or gallery: $e');
@@ -439,7 +441,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         Row(children: [
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: _photos.length >= maxPhotos ? null : () => _addPhoto(ImageSource.camera),
+              onPressed: _photos.length >= _maxPhotos ? null : () => _addPhoto(ImageSource.camera),
               icon: const Icon(Icons.photo_camera),
               label: const Text('Take photo'),
             ),
@@ -447,14 +449,14 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: _photos.length >= maxPhotos ? null : () => _addPhoto(ImageSource.gallery),
+              onPressed: _photos.length >= _maxPhotos ? null : () => _addPhoto(ImageSource.gallery),
               icon: const Icon(Icons.photo_library),
               label: const Text('From gallery'),
             ),
           ),
         ]),
         const SizedBox(height: 6),
-        Text('Optional. Up to $maxPhotos photos.', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+        Text('Optional. Up to $_maxPhotos photos.', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
         if (_errors['photos'] != null) Text(_errors['photos']!, style: const TextStyle(color: AppColors.siren)),
         const SizedBox(height: 12),
         GridView.count(

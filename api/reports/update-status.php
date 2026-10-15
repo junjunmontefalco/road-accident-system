@@ -12,12 +12,12 @@ require_method('POST');
 
 $user = require_auth(['admin', 'officer']);
 $in = input();
-$id = filter_var($in['id'] ?? null, FILTER_VALIDATE_INT);
+$id = (int)filter_var($in['id'] ?? null, FILTER_VALIDATE_INT);
 $to = str_field($in, 'status');
 $note = str_field($in, 'note');
 $reason = str_field($in, 'reason');
 
-$r = $id ? find_report((int)$id) : null;
+$r = find_report($id);
 if (!$r || !can_view_report($user, $r)) {
     json_error('Report not found', 404);
 }
@@ -33,36 +33,36 @@ if (!can_change_status($user, $r, $to)) {
 if ($to === 'rejected' && $reason === null) {
     json_error('A reason is required to reject a report', 422, ['reason' => 'Enter the reason']);
 }
-
-$pdo = db();
-$pdo->beginTransaction();
-try {
-    $sets = ['status = ?'];
-    $vals = [$to];
-    if ($to === 'verified') {
-        $sets[] = 'verified_by = ?';
-        $sets[] = 'verified_at = NOW()';
-        $vals[] = $user['id'];
-    }
-    if ($to === 'rejected') {
-        $sets[] = 'rejection_reason = ?';
-        $vals[] = mb_substr($reason, 0, 255);
-    }
-    $vals[] = $r['id'];
-    db_exec('UPDATE reports SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
-
-    $historyNote = $to === 'rejected' ? "Rejected: $reason" : $note;
-    record_status_change((int)$r['id'], $r['status'], $to, (int)$user['id'], $historyNote);
-    audit_log((int)$user['id'], 'report.status', 'report', (int)$r['id'], ['from' => $r['status'], 'to' => $to, 'note' => $historyNote]);
-
-    if ($r['reporter_id'] && in_array($to, REPORTER_NOTIFY_STATUSES, true)) {
-        $msg = 'Status is now: ' . status_label($to) . ($to === 'rejected' ? " ($reason)" : ($note && $to === 'info_required' ? " - $note" : ''));
-        notify_user((int)$r['reporter_id'], "Report {$r['report_code']} updated", mb_substr($msg, 0, 255), (int)$r['id']);
-    }
-    $pdo->commit();
-} catch (Throwable $e) {
-    $pdo->rollBack();
-    throw $e;
+if ($to === 'info_required' && $note === null) {
+    json_error('Tell the reporter what information is missing', 422, ['note' => 'Enter what is missing']);
 }
 
-json_ok(format_report(find_report((int)$r['id']), $user), 'Status updated');
+$changes = ['status' => $to, 'updated_at' => now()];
+if ($to === 'verified') {
+    $changes['verified_by'] = $user['id'];
+    $changes['verified_by_name'] = $user['full_name'];
+    $changes['verified_at'] = now();
+}
+if ($to === 'rejected') {
+    $changes['rejection_reason'] = mb_substr($reason, 0, 255);
+}
+$historyNote = $to === 'rejected' ? "Rejected: $reason" : $note;
+
+$writes = [
+    fs_w_update('reports', $id, $changes, true, ['history' => [history_entry($r['status'], $to, $user, $historyNote)]]),
+    audit_write($user, 'report.status', 'report', $id, ['from' => $r['status'], 'to' => $to, 'note' => $historyNote]),
+];
+if (!empty($r['reporter_id']) && in_array($to, REPORTER_NOTIFY_STATUSES, true)) {
+    $msg = 'Status is now: ' . status_label($to)
+        . ($to === 'rejected' ? " ($reason)" : ($note && $to === 'info_required' ? " - $note" : ''));
+    $writes = array_merge($writes, notification_writes([$r['reporter_id']], "Report {$r['report_code']} updated", $msg, $r));
+}
+// Officers' updates go to the admins too
+if ($user['role'] === 'officer') {
+    $writes = array_merge($writes, notification_writes(admin_ids(), "Report {$r['report_code']} updated",
+        "{$user['full_name']} set the status to " . status_label($to), $r));
+}
+fs_commit($writes);
+send_queued_emails();
+
+report_response($id, $user, 'Status updated');

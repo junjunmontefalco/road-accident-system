@@ -46,6 +46,8 @@ const INJURY_OPTIONS = [
     'unknown'    => 'Unknown',
 ];
 
+const VEHICLE_TYPES = ['Car', 'Motorcycle', 'Jeepney', 'Tricycle', 'Truck', 'Bus', 'Van', 'Bicycle', 'E-bike', 'Other'];
+
 function status_label(string $code): string
 {
     return REPORT_STATUSES[$code] ?? $code;
@@ -57,17 +59,21 @@ function can_change_status(array $user, array $report, string $to): bool
     if ($user['role'] === 'admin') {
         return in_array($to, STATUS_TRANSITIONS[$from] ?? [], true);
     }
-    if ($user['role'] === 'officer' && (int)$report['assigned_officer_id'] === (int)$user['id']) {
+    if ($user['role'] === 'officer' && (int)($report['assigned_officer_id'] ?? 0) === (int)$user['id']) {
         return in_array($to, OFFICER_TRANSITIONS[$from] ?? [], true);
     }
     return false;
 }
 
-/** Save a status change + history row. Call inside a transaction. */
-function record_status_change(int $reportId, ?string $from, string $to, ?int $byUserId, ?string $note): void
+/** One entry of the report's status history (stored in the report document). */
+function history_entry(?string $from, string $to, ?array $byUser, ?string $note): array
 {
-    db_exec(
-        'INSERT INTO report_status_history (report_id, from_status, to_status, changed_by, note) VALUES (?, ?, ?, ?, ?)',
-        [$reportId, $from, $to, $byUserId, $note]
-    );
+    return [
+        'from_status'     => $from,
+        'to_status'       => $to,
+        'changed_by'      => $byUser ? (int)$byUser['id'] : null,
+        'changed_by_name' => $byUser['full_name'] ?? null,
+        'note'            => $note !== null ? mb_substr($note, 0, 255) : null,
+        'created_at'      => now(),
+    ];
 }

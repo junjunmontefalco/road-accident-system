@@ -155,7 +155,32 @@ class Api {
     return Map<String, dynamic>.from(await _send(() async => http.Response.fromStream(await req.send())));
   }
 
+  /// Reporter answers "Additional Information Required": text + optional photos.
+  Future<Map<String, dynamic>> addInfo(int reportId, String message, List<String> photoPaths) async {
+    final req = http.MultipartRequest('POST', _uri('/reports/add-info.php'));
+    req.headers.addAll(_headers);
+    req.fields.addAll({'id': '$reportId', 'message': message});
+    for (final p in photoPaths) {
+      req.files.add(await http.MultipartFile.fromPath('photos[]', p));
+    }
+    return Map<String, dynamic>.from(await _send(() async => http.Response.fromStream(await req.send())));
+  }
+
   Future<Map<String, dynamic>> notifications() async => Map<String, dynamic>.from(await get('/notifications/list.php'));
+
+  Future<int> unreadCount() async {
+    final d = Map<String, dynamic>.from(await get('/notifications/list.php', query: {'unread': '1'}));
+    return (d['unread_count'] as num?)?.toInt() ?? 0;
+  }
+
+  // ---------- account ----------
+
+  /// Change name, email, phone or password. Email and password changes need current_password.
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> fields) async {
+    final data = Map<String, dynamic>.from(await post('/auth/update-profile.php', fields));
+    currentUser = data;
+    return data;
+  }
 
   Future<void> markRead({int? id}) => post('/notifications/read.php', id == null ? {'all': true} : {'id': id});
 

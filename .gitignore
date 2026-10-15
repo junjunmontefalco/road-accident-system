@@ -1,14 +1,18 @@
-# Web
-web/node_modules/
-web/dist/
-web/.env
+# Firebase key: NEVER commit it. Share it with the group privately (Messenger, USB...).
+api/config/firebase-service-account.json
+api/config/*.json
 
-# Uploaded photos (keep the folder and its .htaccess)
-api/uploads/*
-!api/uploads/.htaccess
+# Google login token cache (keep the folder and its .htaccess)
+api/cache/*
+!api/cache/.htaccess
+
+# Flutter
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
 
 # OS / editors
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/

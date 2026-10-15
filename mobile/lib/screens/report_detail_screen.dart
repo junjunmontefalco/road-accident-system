@@ -6,6 +6,7 @@ import '../services/api.dart';
 import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/status_badge.dart';
+import 'add_info_screen.dart';
 
 /// One report with its status timeline (FR-06). Owner: Alyana
 class ReportDetailScreen extends StatefulWidget {
@@ -58,6 +59,25 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     ),
                   ),
                 ]),
+                if (r['status'] == 'info_required') ...[
+                  const SizedBox(height: 12),
+                  Panel(
+                    accent: AppColors.lane,
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      const Text('The traffic office needs more information',
+                          style: TextStyle(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed: () async {
+                          final sent = await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(builder: (_) => AddInfoScreen(report: r)));
+                          if (sent == true) setState(() => _future = Api.instance.report(widget.reportId));
+                        },
+                        child: const Text('Send the missing information'),
+                      ),
+                    ]),
+                  ),
+                ],
                 if (r['status'] == 'rejected' && r['rejection_reason'] != null) ...[
                   const SizedBox(height: 8),
                   Text('Rejected: ${r['rejection_reason']}', style: const TextStyle(color: AppColors.siren)),
@@ -138,7 +158,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text('${m['content']}'),
-                      subtitle: Text('${m['officer'] ?? ''}, ${formatDateTime(m['date'])}'),
+                      subtitle: Text(
+                          '${m['type'] == 'reporter_info' ? 'You' : (m['officer'] ?? '')}, ${formatDateTime(m['date'])}'),
                     ),
                 ],
               ],
